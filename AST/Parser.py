@@ -18,8 +18,8 @@ class Parser:
         if_kw, else_kw = pp.Keyword('if'), pp.Keyword('else')
         for_kw, do_kw, while_kw = pp.Keyword('for'), pp.Keyword('do'), pp.Keyword('while')
 
-        l_par, r_par = pp.Literal('(').suppress(), pp.Literal(')')
-        l_bracket, r_bracket = pp.Literal('{').suppress(), pp.Literal('}')
+        l_par, r_par = pp.Literal('(').suppress(), pp.Literal(')').suppress()
+        l_bracket, r_bracket = pp.Literal('{').suppress(), pp.Literal('}').suppress()
         semicolon, comma = pp.Literal(';').suppress(), pp.Literal(',').suppress()
 
         assign = pp.Literal('=')
@@ -27,18 +27,24 @@ class Parser:
         log_and, log_or, log_not = pp.Literal('&&'), pp.Literal('||'), pp.Literal('!')
         gt, lt, ge, le = pp.Literal('>'), pp.Literal('<'), pp.Literal('>='), pp.Literal('<=')
         neq, eq = pp.Literal('!='), pp.Literal('==')
+        incr, decr = pp.Literal('++'), pp.Literal('--')
+        comp_add, comp_sub, comp_mul, comp_div, comp_mod = pp.Literal('+='), pp.Literal('-='), pp.Literal('*='), \
+                                                           pp.Literal('/='), pp.Literal('%=')
 
         add_op = pp.Forward()
         expr = pp.Forward()
 
         call = ident + l_par + pp.Optional(expr + pp.ZeroOrMore(comma + expr)) + r_par
 
-        group = (literal | call | ident | l_par + expr + r_par)
+        incr_op = ident + incr.suppress()
+        decr_op = ident + decr.suppress()
 
-        mul_op = pp.Group(group + pp.ZeroOrMore((mul | div | mod)) + group)
-        add_op << pp.Group(mul_op + pp.ZeroOrMore((add | sub)) + mul_op)
-        compare = pp.Group(add_op + pp.ZeroOrMore((gt | lt | ge | le)) + add_op)
-        compare_eq = pp.Group(compare + pp.ZeroOrMore((eq | neq)) + compare)
+        group = (literal | call | pp.Group(incr_op | decr_op) | ident | l_par + expr + r_par)
+
+        mul_op = pp.Group(group + pp.ZeroOrMore((mul | div | mod) + group))
+        add_op << pp.Group(mul_op + pp.ZeroOrMore((add | sub) + mul_op))
+        compare = pp.Group(add_op + pp.ZeroOrMore((gt | lt | ge | le) + add_op))
+        compare_eq = pp.Group(compare + pp.ZeroOrMore((eq | neq) + compare))
         log_and_op = pp.Group(compare_eq + pp.ZeroOrMore(log_and + compare_eq))
         log_or_op = pp.Group(log_and_op + pp.ZeroOrMore(log_or + log_and_op))
         expr << log_or_op
@@ -59,24 +65,24 @@ class Parser:
         if_ = if_kw.suppress() + l_par + expr + r_par + stmt + pp.Optional(else_kw.suppress() + stmt)
         for_ = for_kw.suppress() + l_par + for_statement + semicolon + for_test + semicolon + for_statement + r_par + for_block
         while_ = while_kw.suppress() + l_par + expr + r_par + stmt
-        stmt_list = pp.ZeroOrMore(stmt + pp.ZeroOrMore(semicolon))
-        block = l_bracket + stmt_list + r_bracket
+        block = pp.ZeroOrMore(stmt + pp.ZeroOrMore(semicolon))
+        br_block = l_bracket + block + r_bracket
         do_while = do_kw + stmt + while_kw + l_par + expr + r_par
-        func_decl = func_kw + ident + l_par + pp.Optional(ident + pp.ZeroOrMore(comma + ident)) + r_par + block
+        func_decl = func_kw.suppress() + ident + l_par + pp.Optional(
+            ident + pp.ZeroOrMore(comma + ident)) + r_par + block
 
         stmt << (
-            if_ |
-            for_ |
-            while_ |
-            do_while |
-            block |
-            mult_var + semicolon |
-            simple_stmt + semicolon |
-            func_decl
+                if_ |
+                for_ |
+                while_ |
+                do_while |
+                br_block |
+                mult_var + semicolon |
+                simple_stmt + semicolon |
+                func_decl
         )
 
-        return stmt_list.ignore(pp.cStyleComment).ignore(pp.dblSlashComment) + pp.stringEnd
+        return block.ignore(pp.cStyleComment).ignore(pp.dblSlashComment) + pp.stringEnd
 
     def parse(self, code: str) -> BlockStatement:
         return self.grammar.parseString(str(code))
-
