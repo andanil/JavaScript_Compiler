@@ -1,5 +1,6 @@
 from abc import abstractmethod, ABC
-from typing import Tuple
+from enum import Enum
+from typing import Tuple, Callable
 
 
 class TreeNode(ABC):
@@ -24,6 +25,13 @@ class TreeNode(ABC):
     @abstractmethod
     def __str__(self):
         pass
+
+    def visit(self, func: Callable[['TreeNode'], None]) -> None:
+        func(self)
+        map(func, self.children)
+
+    def __getitem__(self, index):
+        return self.children[index] if index < len(self.children) else None
 
 
 class EvalNode(TreeNode):
@@ -54,7 +62,26 @@ class IdentNode(ValueNode):
         return str(self.name)
 
 
-class BinExpr(ExprNode):
+class BinOp(Enum):
+    ADD = '+'
+    SUB = '-'
+    MUL = '*'
+    DIV = '/'
+    MOD = '%'
+    INCR = '++'
+    DECR = '--'
+    ASSIGN = '='
+    GE = '>='
+    LE = '<='
+    NEQ = '!='
+    EQ = '=='
+    GT = '>'
+    LT = '<'
+    LOG_AND = '&&'
+    LOG_OR = '||'
+
+
+class BinExprNode(ExprNode):
     def __init__(self, left, right, op):
         self.left = left
         self.right = right
@@ -81,8 +108,9 @@ class UnaryExpr(ExprNode):
         return str(self.op)
 
 
-class VarDeclaration(TreeNode):
+class VarDeclarationNode(TreeNode):
     def __init__(self, declarations):
+        super().__init__()
         self.declarations = declarations
 
     @property
@@ -93,8 +121,9 @@ class VarDeclaration(TreeNode):
         return 'var'
 
 
-class Declarator(TreeNode):
+class DeclaratorNode(TreeNode):
     def __init__(self, ident, init):
+        super().__init__()
         self.ident = ident
         self.init = init
 
@@ -106,8 +135,9 @@ class Declarator(TreeNode):
         return str(self.ident)
 
 
-class BlockStatement(TreeNode):
+class BlockStatementNode(TreeNode):
     def __init__(self, nodes):
+        super().__init__()
         self.nodes = nodes
 
     @property
@@ -118,8 +148,8 @@ class BlockStatement(TreeNode):
         return 'block'
 
 
-class FuncDeclaration(TreeNode):
-    def __init__(self, ident: IdentNode, params: Tuple[IdentNode], block: BlockStatement):
+class FuncDeclarationNode(TreeNode):
+    def __init__(self, ident: IdentNode, params: Tuple[IdentNode], block: BlockStatementNode):
         self.ident = ident
         self.params = params
         self.block = block
@@ -147,7 +177,7 @@ class IfNode(TreeNode):
 
 
 class ForNode(TreeNode):
-    def __init(self, init: VarDeclaration, test: EvalNode, update: EvalNode, block: BlockStatement):
+    def __init(self, init: VarDeclarationNode, test: EvalNode, update: EvalNode, block: BlockStatementNode):
         self.init = init
         self.test = test
         self.update = update
@@ -162,7 +192,7 @@ class ForNode(TreeNode):
 
 
 class WhileNode(TreeNode):
-    def __init(self, test: EvalNode, block: BlockStatement):
+    def __init(self, test: EvalNode, block: BlockStatementNode):
         self.test = test
         self.block = block
 
@@ -175,7 +205,7 @@ class WhileNode(TreeNode):
 
 
 class DoWhileNode(TreeNode):
-    def __init(self, block: BlockStatement, test: EvalNode):
+    def __init(self, block: BlockStatementNode, test: EvalNode):
         self.block = block
         self.test = test
 

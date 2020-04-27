@@ -1,3 +1,6 @@
+import inspect
+from contextlib import suppress
+
 import pyparsing as pp
 from pyparsing import pyparsing_common as ppc
 from AST.Nodes import *
@@ -11,65 +14,67 @@ class Parser:
     def __mk_grammar():
         num = pp.Regex('[+-]?\\d+\\.?\\d*([eE][+-]?\\d+)?')
         str_ = pp.QuotedString('"', escChar='\\', unquoteResults=False, convertWhitespaceEscapes=False)
-        literal = num | str_
-        ident = ppc.identifier
+        literal = (num | str_).setName('Literal')
+        ident = ppc.identifier.setName('Ident')
 
-        var_kw, func_kw = pp.Keyword('var'), pp.Keyword('function')
-        if_kw, else_kw = pp.Keyword('if'), pp.Keyword('else')
-        for_kw, do_kw, while_kw = pp.Keyword('for'), pp.Keyword('do'), pp.Keyword('while')
+        VAR_KW, FUNC_KW = pp.Keyword('var'), pp.Keyword('function')
+        IF_KW, ELSE_KW = pp.Keyword('if'), pp.Keyword('else')
+        FOR_KW, DO_KW, WHILE_KW = pp.Keyword('for'), pp.Keyword('do'), pp.Keyword('while')
 
-        l_par, r_par = pp.Literal('(').suppress(), pp.Literal(')').suppress()
-        l_bracket, r_bracket = pp.Literal('{').suppress(), pp.Literal('}').suppress()
-        semicolon, comma = pp.Literal(';').suppress(), pp.Literal(',').suppress()
+        L_PAR, R_PAR = pp.Literal('(').suppress(), pp.Literal(')').suppress()
+        L_BRACKET, R_BRACKET = pp.Literal('{').suppress(), pp.Literal('}').suppress()
+        SEMICOLON, COMMA = pp.Literal(';').suppress(), pp.Literal(',').suppress()
 
-        assign = pp.Literal('=')
-        add, sub, mul, div, mod = pp.Literal('+'), pp.Literal('-'), pp.Literal('*'), pp.Literal('/'), pp.Literal('%')
-        log_and, log_or, log_not = pp.Literal('&&'), pp.Literal('||'), pp.Literal('!')
-        gt, lt, ge, le = pp.Literal('>'), pp.Literal('<'), pp.Literal('>='), pp.Literal('<=')
-        neq, eq = pp.Literal('!='), pp.Literal('==')
-        incr, decr = pp.Literal('++'), pp.Literal('--')
-        comp_add, comp_sub, comp_mul, comp_div, comp_mod = pp.Literal('+='), pp.Literal('-='), pp.Literal('*='), \
+        ASSIGN = pp.Literal('=')
+        ADD, SUB, MUL, DIV, MOD = pp.Literal('+'), pp.Literal('-'), pp.Literal('*'), pp.Literal('/'), pp.Literal('%')
+        LOG_AND, LOG_OR, LOG_NOT = pp.Literal('&&'), pp.Literal('||'), pp.Literal('!')
+        GT, LT, GE, LE = pp.Literal('>'), pp.Literal('<'), pp.Literal('>='), pp.Literal('<=')
+        NEQ, EQ = pp.Literal('!='), pp.Literal('==')
+        INCR, DECR = pp.Literal('++'), pp.Literal('--')
+        COMP_ADD, COMP_SUB, COMP_MUL, COMP_DIV, COMP_MOD = pp.Literal('+='), pp.Literal('-='), pp.Literal('*='), \
                                                            pp.Literal('/='), pp.Literal('%=')
-
+        mul_op = pp.Forward()
         add_op = pp.Forward()
         expr = pp.Forward()
 
-        call = ident + l_par + pp.Optional(expr + pp.ZeroOrMore(comma + expr)) + r_par
+        call = (ident + L_PAR + pp.Optional(expr + pp.ZeroOrMore(COMMA + expr)) + R_PAR).setName('Call')
 
-        incr_op = ident + incr.suppress()
-        decr_op = ident + decr.suppress()
+        incr_op = (ident + INCR.suppress()).setName('UnaryExpression')
+        decr_op = (ident + DECR.suppress()).setName('UnaryExpression')
 
-        group = (literal | call | pp.Group(incr_op | decr_op) | ident | l_par + expr + r_par)
+        group = (literal | call | ident | L_PAR + expr + R_PAR)
 
-        mul_op = pp.Group(group + pp.ZeroOrMore((mul | div | mod) + group))
-        add_op << pp.Group(mul_op + pp.ZeroOrMore((add | sub) + mul_op))
-        compare = pp.Group(add_op + pp.ZeroOrMore((gt | lt | ge | le) + add_op))
-        compare_eq = pp.Group(compare + pp.ZeroOrMore((eq | neq) + compare))
-        log_and_op = pp.Group(compare_eq + pp.ZeroOrMore(log_and + compare_eq))
-        log_or_op = pp.Group(log_and_op + pp.ZeroOrMore(log_or + log_and_op))
+        mul_op << pp.Group(group + pp.ZeroOrMore((MUL | DIV | MOD) + group)).setName('BinExpr')
+        add_op << pp.Group(mul_op + pp.ZeroOrMore((ADD | SUB) + mul_op)).setName('BinExpr')
+        compare = pp.Group(add_op + pp.ZeroOrMore((GE | LE | GT | LT) + add_op)).setName('BinExpr')
+        compare_eq = pp.Group(compare + pp.ZeroOrMore((EQ | NEQ) + compare)).setName('BinExpr')
+        log_and_op = pp.Group(compare_eq + pp.ZeroOrMore(LOG_AND + compare_eq)).setName('BinExpr')
+        log_or_op = pp.Group(log_and_op + pp.ZeroOrMore(LOG_OR + log_and_op)).setName('BinExpr')
         expr << log_or_op
 
-        simple_assign = ident + assign.suppress() + expr
+        simple_assign = (ident + ASSIGN.suppress() + expr).setName('BinExpr')
         var_item = simple_assign | ident
-        simple_var = var_kw.suppress() + var_item
-        mult_var = simple_var + pp.ZeroOrMore(comma + var_item)
-
+        simple_var = (VAR_KW.suppress() + var_item).setName('Declarator')
+        mult_var_item = (COMMA + var_item).setName('Declarator')
+        mult_var = (simple_var + pp.ZeroOrMore(mult_var_item)).setName('VarDeclaration')
+        # | comp_add.suppress() | comp_sub.suppress() | comp_div.suppress() | comp_mul.suppress() | comp_mod.suppress()
         stmt = pp.Forward()
-        simple_stmt = simple_assign | call
+        simple_stmt = simple_assign | call | incr_op | decr_op
 
-        for_statement_list = pp.Optional(simple_stmt + pp.ZeroOrMore(comma + simple_stmt))
+        for_statement_list = pp.Optional(simple_stmt + pp.ZeroOrMore(COMMA + simple_stmt))
         for_statement = mult_var | for_statement_list
         for_test = expr | pp.Group(pp.empty)
-        for_block = stmt | pp.Group(semicolon)
+        for_block = stmt | pp.Group(SEMICOLON).setName('BlockStatement')
 
-        if_ = if_kw.suppress() + l_par + expr + r_par + stmt + pp.Optional(else_kw.suppress() + stmt)
-        for_ = for_kw.suppress() + l_par + for_statement + semicolon + for_test + semicolon + for_statement + r_par + for_block
-        while_ = while_kw.suppress() + l_par + expr + r_par + stmt
-        block = pp.ZeroOrMore(stmt + pp.ZeroOrMore(semicolon))
-        br_block = l_bracket + block + r_bracket
-        do_while = do_kw + stmt + while_kw + l_par + expr + r_par
-        func_decl = func_kw.suppress() + ident + l_par + pp.Optional(
-            ident + pp.ZeroOrMore(comma + ident)) + r_par + block
+        if_ = (IF_KW.suppress() + L_PAR + expr + R_PAR + stmt + pp.Optional(ELSE_KW.suppress() + stmt)).setName('If')
+        for_ = (FOR_KW.suppress() + L_PAR + for_statement + SEMICOLON + for_test + SEMICOLON +
+                for_statement + R_PAR + for_block).setName('For')
+        while_ = (WHILE_KW.suppress() + L_PAR + expr + R_PAR + stmt).setName('While')
+        block = pp.ZeroOrMore(stmt + pp.ZeroOrMore(SEMICOLON)).setName('BlockStatement')
+        br_block = L_BRACKET + block + R_BRACKET
+        do_while = (DO_KW + stmt + WHILE_KW + L_PAR + expr + R_PAR).setName('DoWhile')
+        func_decl = (FUNC_KW.suppress() + ident + L_PAR + pp.Optional(
+            ident + pp.ZeroOrMore(COMMA + ident)) + L_PAR + block).setName('FuncDeclaration')
 
         stmt << (
                 if_ |
@@ -77,12 +82,45 @@ class Parser:
                 while_ |
                 do_while |
                 br_block |
-                mult_var + semicolon |
-                simple_stmt + semicolon |
+                mult_var + SEMICOLON |
+                simple_stmt + SEMICOLON |
                 func_decl
         )
 
+        for var_name, value in locals().copy().items():
+            if isinstance(value, pp.ParserElement):
+                Parser.__set_parse_action(var_name, value)
+
         return block.ignore(pp.cStyleComment).ignore(pp.dblSlashComment) + pp.stringEnd
 
-    def parse(self, code: str) -> BlockStatement:
-        return self.grammar.parseString(str(code))
+    @staticmethod
+    def __set_parse_action(rule_name: str, rule: pp.ParserElement):
+        if rule_name == rule_name.upper():
+            return
+        if getattr(rule, 'name', None) and rule.name.isidentifier():
+            rule_name = rule.name
+        if rule_name in ('BinExpr',):
+            def bin_op_parse_action(s, loc, toks):
+                node = toks[0]
+                if not isinstance(node, TreeNode):
+                    node = bin_op_parse_action(s, loc, node)
+                for i in range(1, len(toks) - 1, 2):
+                    secondNode = toks[i + 1]
+                    if not isinstance(secondNode, TreeNode):
+                        secondNode = bin_op_parse_action(s, loc, secondNode)
+                    node = BinExprNode(BinOp(toks[i]), node, secondNode)
+                return node
+
+            rule.setParseAction(bin_op_parse_action)
+        else:
+            cls = rule_name + 'Node'
+            with suppress(NameError):
+                cls = eval(cls)
+                if not inspect.isabstract(cls):
+                    def parse_action(s, loc, toks):
+                        print(list(toks))
+                        return cls(*toks)
+                    rule.setParseAction(parse_action)
+
+    def parse(self, code: str) -> BlockStatementNode:
+        return self.grammar.parseString(str(code))[0]
