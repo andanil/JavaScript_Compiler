@@ -1,5 +1,5 @@
-from Instructions import *
-from Context import Context
+from VirtualMachine.Instructions import *
+from VirtualMachine.Context import Context
 
 
 class VirtualMachine:
