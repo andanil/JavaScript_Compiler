@@ -147,7 +147,7 @@ class BlockStatementNode(TreeNode):
 
 
 class FuncDeclarationNode(TreeNode):
-    def __init__(self, ident: IdentNode, *params: IdentNode, block: BlockStatementNode):
+    def __init__(self, ident: IdentNode, *block: BlockStatementNode, params: Tuple[IdentNode] = None):
         self.ident = ident
         self.params = params
         self.block = block
@@ -157,7 +157,7 @@ class FuncDeclarationNode(TreeNode):
         return self.block
 
     def __str__(self) -> str:
-        return str(self.ident) + '(' + str([str(p) for p in enumerate(self.params)]) + ')'
+        return str(self.ident) + '(' + (str([str(p) for p in enumerate(self.params)]) if self.params else "") + ')'
 
 
 class IfNode(TreeNode):
@@ -221,8 +221,8 @@ class CallNode(TreeNode):
         self.args = args
 
     @property
-    def children(self) -> Tuple[EvalNode]:
-        return self.args
+    def children(self) -> Tuple[IdentNode, EvalNode]:
+        return (self.ident,) + self.args
 
     def __str__(self) -> str:
         return 'call'

@@ -2,13 +2,15 @@ import os
 from AST.Parser import *
 
 prog = '''
-    //a + 2;
-    var a, b;
+    function kek(b, c){
+        var s;
+    }   
+    kek(3, 5);
     if(a < 2)
         b = 3;
-    /*for (var i = 0; i < 10; i++){
+    for (var i = 0; i < 10; i++){
         a--;
-    }*/
+    }
 '''
 
 parser = Parser()

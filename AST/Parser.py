@@ -74,7 +74,7 @@ class Parser:
         br_block = L_BRACKET + block + R_BRACKET
         do_while = (DO_KW + stmt + WHILE_KW + L_PAR + expr + R_PAR).setName('DoWhile')
         func_decl = (FUNC_KW.suppress() + ident + L_PAR + pp.Optional(
-            ident + pp.ZeroOrMore(COMMA + ident)) + L_PAR + block).setName('FuncDeclaration')
+            ident + pp.ZeroOrMore(COMMA + ident)) + R_PAR + br_block).setName('FuncDeclaration')
 
         stmt << (
                 if_ |
