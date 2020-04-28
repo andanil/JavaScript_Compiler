@@ -3,20 +3,9 @@ from AST.Parser import *
 
 # строка с кодом, который в последствии будет распознаваться парсером.
 prog = '''
-    function ff(){
-        var b = 0;
-        for(;(i < 10) || (j > 1); i++, j--)
-            b = i ** j;
-        return b;
-    }
-    kek(3, 5, b);
-    if(a < 2)
-        b = 3;
-    for (var i = 0; i < 10; i++){
-        a--;
-    }
-
-    return d;
+    do {
+        i = 1 + 2;
+    } while(c < 3)
 '''
 # вызов конструктора класса Parser.
 parser = Parser()

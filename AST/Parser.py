@@ -68,7 +68,7 @@ class Parser:
         mult_var = (simple_var + pp.ZeroOrMore(mult_var_item)).setName('VarDeclaration')
 
         stmt = pp.Forward()
-        simple_stmt = comp_op | assign | call | incr_op | decr_op
+        simple_stmt = assign | call | incr_op | decr_op
 
         # Описание цикла for.
         for_statement_list = pp.Optional(simple_stmt + pp.ZeroOrMore(COMMA + simple_stmt)).setName('BlockStatement')
@@ -81,7 +81,7 @@ class Parser:
         for_ = (FOR_KW.suppress() + L_PAR + for_statement + SEMICOLON + for_test + SEMICOLON +
                 for_statement + R_PAR + for_block).setName('For')
         while_ = (WHILE_KW.suppress() + L_PAR + expr + R_PAR + stmt).setName('While')
-        do_while = (DO_KW + stmt + WHILE_KW + L_PAR + expr + R_PAR).setName('DoWhile')
+        do_while = (DO_KW.suppress() + stmt + WHILE_KW.suppress() + L_PAR + expr + R_PAR).setName('DoWhile')
         # Описание блока кода в { } и без них, аргументов функции, объявления функции и оператора return.
         block = pp.ZeroOrMore(stmt + pp.ZeroOrMore(SEMICOLON)).setName('BlockStatement')
         br_block = L_BRACKET + block + R_BRACKET
