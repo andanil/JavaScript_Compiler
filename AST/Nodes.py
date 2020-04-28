@@ -1,14 +1,14 @@
 from abc import abstractmethod, ABC
 from enum import Enum
-from typing import Tuple, Callable
+from typing import Tuple, Callable, Optional
 
 
 class TreeNode(ABC):
     def __init__(self):
-        pass
+        super().__init__()
 
     @property
-    def children(self):
+    def children(self) -> Tuple['TreeNode', ...]:
         return ()
 
     @property
@@ -82,17 +82,17 @@ class BinOp(Enum):
 
 
 class BinExprNode(ExprNode):
-    def __init__(self, left, right, op):
+    def __init__(self, op, left, right):
         self.left = left
         self.right = right
         self.op = op
 
     @property
-    def children(self):
+    def children(self) -> Tuple[EvalNode, EvalNode]:
         return self.left, self.right
 
     def __str__(self) -> str:
-        return str(self.op)
+        return str(self.op.value)
 
 
 class UnaryExpr(ExprNode):
@@ -101,47 +101,45 @@ class UnaryExpr(ExprNode):
         self.argument = argument
 
     @property
-    def children(self):
+    def children(self) -> Tuple[EvalNode]:
         return self.argument
 
     def __str__(self) -> str:
-        return str(self.op)
+        return str(self.op.value)
+
+
+class DeclaratorNode(TreeNode):
+    def __init__(self, ident: IdentNode, init: EvalNode = None):
+        self.ident = ident
+        self.init = init
+
+    @property
+    def children(self) -> Tuple[EvalNode]:
+        return (self.init,) if self.init else tuple()
+
+    def __str__(self) -> str:
+        return str(self.ident)
 
 
 class VarDeclarationNode(TreeNode):
-    def __init__(self, declarations):
+    def __init__(self, *declarations: DeclaratorNode):
         super().__init__()
         self.declarations = declarations
 
     @property
-    def children(self):
+    def children(self) -> Tuple[DeclaratorNode]:
         return self.declarations
 
     def __str__(self) -> str:
         return 'var'
 
 
-class DeclaratorNode(TreeNode):
-    def __init__(self, ident, init):
-        super().__init__()
-        self.ident = ident
-        self.init = init
-
-    @property
-    def children(self):
-        return self.init
-
-    def __str__(self) -> str:
-        return str(self.ident)
-
-
 class BlockStatementNode(TreeNode):
-    def __init__(self, nodes):
-        super().__init__()
+    def __init__(self, *nodes: TreeNode):
         self.nodes = nodes
 
     @property
-    def children(self):
+    def children(self) -> Tuple[TreeNode]:
         return self.nodes
 
     def __str__(self) -> str:
@@ -149,13 +147,13 @@ class BlockStatementNode(TreeNode):
 
 
 class FuncDeclarationNode(TreeNode):
-    def __init__(self, ident: IdentNode, params: Tuple[IdentNode], block: BlockStatementNode):
+    def __init__(self, ident: IdentNode, *params: IdentNode, block: BlockStatementNode):
         self.ident = ident
         self.params = params
         self.block = block
 
     @property
-    def children(self):
+    def children(self) -> Tuple[BlockStatementNode]:
         return self.block
 
     def __str__(self) -> str:
@@ -163,28 +161,28 @@ class FuncDeclarationNode(TreeNode):
 
 
 class IfNode(TreeNode):
-    def __init(self, test: EvalNode, consequent: TreeNode, alternate: TreeNode):
+    def __init__(self, test: EvalNode, consequent: BlockStatementNode, alternate: BlockStatementNode = None):
         self.test = test
         self.consequent = consequent
         self.alternate = alternate
 
     @property
-    def children(self):
-        return self.test, self.consequent, self.alternate
+    def children(self) -> Tuple[EvalNode, ...]:
+        return (self.test, self.consequent) + ((self.alternate,) if self.alternate else tuple())
 
     def __str__(self) -> str:
         return 'if'
 
 
 class ForNode(TreeNode):
-    def __init(self, init: VarDeclarationNode, test: EvalNode, update: EvalNode, block: BlockStatementNode):
+    def __init__(self, init: VarDeclarationNode, test: EvalNode, update: EvalNode, block: BlockStatementNode):
         self.init = init
         self.test = test
         self.update = update
         self.block = block
 
     @property
-    def children(self):
+    def children(self) -> Tuple[VarDeclarationNode, EvalNode, EvalNode, BlockStatementNode]:
         return self.init, self.test, self.update, self.block
 
     def __str__(self) -> str:
@@ -192,12 +190,12 @@ class ForNode(TreeNode):
 
 
 class WhileNode(TreeNode):
-    def __init(self, test: EvalNode, block: BlockStatementNode):
+    def __init__(self, test: EvalNode, block: BlockStatementNode):
         self.test = test
         self.block = block
 
     @property
-    def children(self):
+    def children(self) -> Tuple[EvalNode, BlockStatementNode]:
         return self.test, self.block
 
     def __str__(self) -> str:
@@ -205,12 +203,12 @@ class WhileNode(TreeNode):
 
 
 class DoWhileNode(TreeNode):
-    def __init(self, block: BlockStatementNode, test: EvalNode):
+    def __init__(self, block: BlockStatementNode, test: EvalNode):
         self.block = block
         self.test = test
 
     @property
-    def children(self):
+    def children(self) -> Tuple[BlockStatementNode, EvalNode]:
         return self.block, self.test
 
     def __str__(self) -> str:
@@ -218,12 +216,12 @@ class DoWhileNode(TreeNode):
 
 
 class CallNode(TreeNode):
-    def __init(self, ident: IdentNode, args: Tuple[EvalNode]):
+    def __init__(self, ident: IdentNode, *args: EvalNode):
         self.ident = ident
         self.args = args
 
     @property
-    def children(self):
+    def children(self) -> Tuple[EvalNode]:
         return self.args
 
     def __str__(self) -> str:

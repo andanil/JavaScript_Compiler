@@ -2,9 +2,10 @@ import os
 from AST.Parser import *
 
 prog = '''
-    var a = 1, b = 2;
-    /*if(a < 2)
-        b = 4;*/
+    //a + 2;
+    var a, b;
+    if(a < 2)
+        b = 3;
     /*for (var i = 0; i < 10; i++){
         a--;
     }*/
