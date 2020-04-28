@@ -1,5 +1,5 @@
 from abc import abstractmethod, ABC
-from typing import Tuple, Callable
+from typing import Tuple, Callable, Optional
 
 
 class TreeNode(ABC):
@@ -179,7 +179,7 @@ class FuncDeclarationNode(TreeNode):
     params - аргументы функции,
     block - тело функции.
     """
-    def __init__(self, ident: IdentNode, params: ArgsNode, block: BlockStatementNode):
+    def __init__(self, ident: IdentNode, block: BlockStatementNode, params: Optional[ArgsNode] = ArgsNode()):
         self.ident = ident
         self.params = params
         self.block = block
