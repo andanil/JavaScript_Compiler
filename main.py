@@ -3,12 +3,12 @@ from AST.Parser import *
 
 # строка с кодом, который в последствии будет распознаваться парсером.
 prog = '''
-    var d = 1, c, k, l = (5+3)**7 + 12;
-    d = 5;
-    b = d**5;
-    function kek(a, b, c, d, e){
-        var s;
-    }   
+    function ff(){
+        var b = 0;
+        for(;(i < 10) || (j > 1); i++, j--)
+            b = i ** j;
+        return b;
+    }
     kek(3, 5, b);
     if(a < 2)
         b = 3;

@@ -71,7 +71,7 @@ class Parser:
         simple_stmt = comp_op | assign | call | incr_op | decr_op
 
         # Описание цикла for.
-        for_statement_list = pp.Optional(simple_stmt + pp.ZeroOrMore(COMMA + simple_stmt))
+        for_statement_list = pp.Optional(simple_stmt + pp.ZeroOrMore(COMMA + simple_stmt)).setName('BlockStatement')
         for_statement = mult_var | for_statement_list
         for_test = expr | pp.Group(pp.empty)
         for_block = stmt | pp.Group(SEMICOLON).setName('BlockStatement')
