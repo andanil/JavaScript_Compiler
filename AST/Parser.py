@@ -17,7 +17,7 @@ class Parser:
         literal = (num | str_).setName('Literal')
         ident = ppc.identifier.setName('Ident')
 
-        VAR_KW, FUNC_KW = pp.Keyword('var'), pp.Keyword('function')
+        VAR_KW, FUNC_KW, RETURN_KW = pp.Keyword('var'), pp.Keyword('function'), pp.Keyword('return')
         IF_KW, ELSE_KW = pp.Keyword('if'), pp.Keyword('else')
         FOR_KW, DO_KW, WHILE_KW = pp.Keyword('for'), pp.Keyword('do'), pp.Keyword('while')
 
@@ -30,7 +30,7 @@ class Parser:
         LOG_AND, LOG_OR, LOG_NOT = pp.Literal('&&'), pp.Literal('||'), pp.Literal('!')
         GT, LT, GE, LE = pp.Literal('>'), pp.Literal('<'), pp.Literal('>='), pp.Literal('<=')
         NEQ, EQ = pp.Literal('!='), pp.Literal('==')
-        INCR, DECR = pp.Literal('++'), pp.Literal('--')
+        INCR, DECR, EXP = pp.Literal('++'), pp.Literal('--'), pp.Literal('**')
         COMP_ADD, COMP_SUB, COMP_MUL, COMP_DIV, COMP_MOD = pp.Literal('+='), pp.Literal('-='), pp.Literal('*='), \
                                                            pp.Literal('/='), pp.Literal('%=')
         mul_op = pp.Forward()
@@ -41,6 +41,7 @@ class Parser:
 
         incr_op = (ident + INCR).setName('UnaryExpr')
         decr_op = (ident + DECR).setName('UnaryExpr')
+        exp_op = (ident + EXP).setName('UnaryExpr')
 
         group = (literal | call | ident | L_PAR + expr + R_PAR)
 
@@ -58,9 +59,9 @@ class Parser:
         simple_var = (VAR_KW.suppress() + var_item).setName('Declarator')
         mult_var_item = (COMMA + var_item).setName('Declarator')
         mult_var = (simple_var + pp.ZeroOrMore(mult_var_item)).setName('VarDeclaration')
-        # | comp_add.suppress() | comp_sub.suppress() | comp_div.suppress() | comp_mul.suppress() | comp_mod.suppress()
+
         stmt = pp.Forward()
-        simple_stmt = assign | call | incr_op | decr_op
+        simple_stmt = assign | call | incr_op | decr_op | exp_op
 
         for_statement_list = pp.Optional(simple_stmt + pp.ZeroOrMore(COMMA + simple_stmt))
         for_statement = mult_var | for_statement_list
@@ -77,6 +78,7 @@ class Parser:
         args = (ident + pp.ZeroOrMore(COMMA + ident)).setName("Args")
         func_decl = (FUNC_KW.suppress() + ident + L_PAR + pp.Optional(args) + R_PAR + br_block)\
             .setName('FuncDeclaration')
+        return_ = (RETURN_KW.suppress() + expr).setName('Return')
 
         stmt << (
                 if_ |
@@ -86,7 +88,8 @@ class Parser:
                 br_block |
                 mult_var + SEMICOLON |
                 simple_stmt + SEMICOLON |
-                func_decl
+                func_decl |
+                return_
         )
 
         for var_name, value in locals().copy().items():

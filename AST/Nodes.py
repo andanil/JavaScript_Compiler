@@ -4,6 +4,7 @@ from typing import Tuple, Callable, Optional
 
 
 class TreeNode(ABC):
+    """ Базовый класс для всех остальных классов. Используется для вывода дерева в консоль """
     def __init__(self):
         super().__init__()
 
@@ -35,18 +36,32 @@ class TreeNode(ABC):
 
 
 class EvalNode(TreeNode):
+    """
+    Класс, от которого наследуются классы,
+    чьи значения можно привести к конкретному цифровому или буквенному значению.
+    """
     pass
 
 
 class ValueNode(EvalNode):
+    """
+    Класс, от которого наследуются классы LitelarNode и IdentNode,
+    то есть те, которые могут содержать какие-либо значения.
+    """
     pass
 
 
 class ExprNode(EvalNode):
+    """
+    Класс, который является родительским для классов, описывающих выражения.
+    """
     pass
 
 
 class LiteralNode(ValueNode):
+    """
+    Класс, содержащий в себе какое-либо значение: число или строку
+    """
     def __init__(self, value):
         self.value = value
 
@@ -55,6 +70,9 @@ class LiteralNode(ValueNode):
 
 
 class IdentNode(ValueNode):
+    """
+    Класс, описывающий какой-либо идентификатор, то есть название переменной или функции.
+    """
     def __init__(self, name):
         self.name = name
 
@@ -63,6 +81,9 @@ class IdentNode(ValueNode):
 
 
 class Operators(Enum):
+    """
+    Вспомогательный класс, дающий удобный доступ к операторам
+    """
     ADD = '+'
     SUB = '-'
     MUL = '*'
@@ -70,6 +91,7 @@ class Operators(Enum):
     MOD = '%'
     INCR = '++'
     DECR = '--'
+    EXP = '**'
     ASSIGN = '='
     GE = '>='
     LE = '<='
@@ -82,6 +104,9 @@ class Operators(Enum):
 
 
 class BinExprNode(ExprNode):
+    """
+    Класс, описывающий бинарное выражение, то есть выражение, имеющее левую и правую часть, и оператор.
+    """
     def __init__(self, op, left, right):
         self.left = left
         self.right = right
@@ -96,6 +121,9 @@ class BinExprNode(ExprNode):
 
 
 class UnaryExprNode(ExprNode):
+    """
+    Класс, описывающий унарное выражение, то есть выражение, имеющее левую часть и оператор.
+    """
     def __init__(self, op, argument):
         self.op = op
         self.argument = argument
@@ -109,6 +137,9 @@ class UnaryExprNode(ExprNode):
 
 
 class DeclaratorNode(TreeNode):
+    """
+    Класс, описывающий объявление переменной.
+    """
     def __init__(self, ident: IdentNode, init: EvalNode = None):
         self.ident = ident
         self.init = init
@@ -122,6 +153,10 @@ class DeclaratorNode(TreeNode):
 
 
 class VarDeclarationNode(TreeNode):
+    """
+    Класс, описывающий объявления переменных. Содержит переменную declarations,
+    в которой хранится множество с экземплярами класса DeclaratorNode.
+    """
     def __init__(self, *declarations: DeclaratorNode):
         super().__init__()
         self.declarations = declarations
@@ -135,6 +170,10 @@ class VarDeclarationNode(TreeNode):
 
 
 class BlockStatementNode(TreeNode):
+    """
+    Класс, содержащий в себе переменную nodes, описывающую множество всех узлов в этом блоке.
+    В нашей реализации вся программа является блоком. Функции, if, for, while и do while также содержат в себе блоки.
+    """
     def __init__(self, *nodes: TreeNode):
         self.nodes = nodes
 
@@ -147,6 +186,9 @@ class BlockStatementNode(TreeNode):
 
 
 class ArgsNode(TreeNode):
+    """
+    Класс, описывающий множество аргументов функции.
+    """
     def __init__(self, *params: Tuple[IdentNode]):
         self.params = params
 
@@ -155,6 +197,12 @@ class ArgsNode(TreeNode):
 
 
 class FuncDeclarationNode(TreeNode):
+    """
+    Класс, описывающий объявление функции. Содержит переменные ident, params, block.
+    ident - название функции,
+    params - аргументы функции,
+    block - тело функции.
+    """
     def __init__(self, ident: IdentNode, params: ArgsNode, block: BlockStatementNode):
         self.ident = ident
         self.params = params
@@ -169,6 +217,12 @@ class FuncDeclarationNode(TreeNode):
 
 
 class IfNode(TreeNode):
+    """
+    Класс, описывающий условный оператор if. Содержит переменные test, consequent, alternate.
+    test - выражение, определяющее дальнейшее поведение,
+    consequent - выполняется, если test принял истинное значение,
+    alternate - выполняется, если test принял отрицательное значение.
+    """
     def __init__(self, test: EvalNode, consequent: BlockStatementNode, alternate: BlockStatementNode = None):
         self.test = test
         self.consequent = consequent
@@ -183,6 +237,13 @@ class IfNode(TreeNode):
 
 
 class ForNode(TreeNode):
+    """
+    Класс, описывающий цикл for. Содержит переменные init, test, update, block.
+    init - объявление переменной-счётчика,
+    test - выражение, определяющее дальнейшее поведение, т.е. будет ли исполняться код в block,
+    update - обновление значений переменной-счётчика.
+    block - выполняется, если test принял истинное значение.
+    """
     def __init__(self, init: VarDeclarationNode, test: EvalNode, update: EvalNode, block: BlockStatementNode):
         self.init = init
         self.test = test
@@ -198,6 +259,11 @@ class ForNode(TreeNode):
 
 
 class WhileNode(TreeNode):
+    """
+    Класс, описывающий цикл while. Содержит переменные test, block.
+    test - выражение, определяющее дальнейшее поведение, т.е. будет ли исполняться код в block,
+    block - выполняется, если test принял истинное значение.
+    """
     def __init__(self, test: EvalNode, block: BlockStatementNode):
         self.test = test
         self.block = block
@@ -211,6 +277,12 @@ class WhileNode(TreeNode):
 
 
 class DoWhileNode(TreeNode):
+    """
+       Класс, описывающий цикл do while. Содержит переменные test, block.
+       test - выражение, определяющее дальнейшее поведение, т.е. будет ли исполняться код в block,
+       block - выполняется, если test принял истинное значение.
+       Отличие от while в том, что код в block выполнится как минимум однократно.
+       """
     def __init__(self, block: BlockStatementNode, test: EvalNode):
         self.block = block
         self.test = test
@@ -224,6 +296,9 @@ class DoWhileNode(TreeNode):
 
 
 class CallNode(TreeNode):
+    """
+    Класс, описывающий вызов функции. ident - название функции, args - аргументы.
+    """
     def __init__(self, ident: IdentNode, *args: EvalNode):
         self.ident = ident
         self.args = args
@@ -234,3 +309,18 @@ class CallNode(TreeNode):
 
     def __str__(self) -> str:
         return 'call'
+
+
+class ReturnNode(TreeNode):
+    """
+    Класс, описывающий оператор return. Переменная argument - возвращаемое значение.
+    """
+    def __init__(self, argument: EvalNode):
+        self.argument = argument
+
+    @property
+    def children(self) -> Tuple[EvalNode, ...]:
+        return self.argument,
+
+    def __str__(self) -> str:
+        return 'return'

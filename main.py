@@ -4,7 +4,7 @@ from AST.Parser import *
 prog = '''
     var d = 1, c, k, l = (5+3)*7 + 12;
     d = 5;
-    d++;
+    d**;
     function kek(b, c){
         var s;
     }   
@@ -14,6 +14,8 @@ prog = '''
     for (var i = 0; i < 10; i++){
         a--;
     }
+    
+    return d;
 '''
 
 parser = Parser()
