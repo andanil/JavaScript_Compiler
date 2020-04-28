@@ -146,18 +146,26 @@ class BlockStatementNode(TreeNode):
         return 'block'
 
 
+class ArgsNode(TreeNode):
+    def __init__(self, *params: Tuple[IdentNode]):
+        self.params = params
+
+    def __str__(self) -> str:
+        return 'args: ' + ', '.join(str(p) for p in self.params)
+
+
 class FuncDeclarationNode(TreeNode):
-    def __init__(self, ident: IdentNode, *block: BlockStatementNode, params: Tuple[IdentNode] = None):
+    def __init__(self, ident: IdentNode, params: ArgsNode, block: BlockStatementNode):
         self.ident = ident
         self.params = params
         self.block = block
 
     @property
-    def children(self) -> Tuple[BlockStatementNode]:
-        return self.block
+    def children(self) -> Tuple[ArgsNode, BlockStatementNode]:
+        return self.params, self.block
 
     def __str__(self) -> str:
-        return str(self.ident) + '(' + (str([str(p) for p in enumerate(self.params)]) if self.params else "") + ')'
+        return 'function ' + str(self.ident)
 
 
 class IfNode(TreeNode):

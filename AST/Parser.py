@@ -52,14 +52,15 @@ class Parser:
         log_or_op = pp.Group(log_and_op + pp.ZeroOrMore(LOG_OR + log_and_op)).setName('BinExpr')
         expr << log_or_op
 
-        simple_assign = (ident + ASSIGN.suppress() + expr).setName('BinExpr')
+        assign = (ident + ASSIGN + expr).setName('BinExpr')
+        simple_assign = (ident + ASSIGN.suppress() + expr)
         var_item = simple_assign | ident
         simple_var = (VAR_KW.suppress() + var_item).setName('Declarator')
         mult_var_item = (COMMA + var_item).setName('Declarator')
         mult_var = (simple_var + pp.ZeroOrMore(mult_var_item)).setName('VarDeclaration')
         # | comp_add.suppress() | comp_sub.suppress() | comp_div.suppress() | comp_mul.suppress() | comp_mod.suppress()
         stmt = pp.Forward()
-        simple_stmt = simple_assign | call | incr_op | decr_op
+        simple_stmt = assign | call | incr_op | decr_op
 
         for_statement_list = pp.Optional(simple_stmt + pp.ZeroOrMore(COMMA + simple_stmt))
         for_statement = mult_var | for_statement_list
@@ -73,8 +74,9 @@ class Parser:
         block = pp.ZeroOrMore(stmt + pp.ZeroOrMore(SEMICOLON)).setName('BlockStatement')
         br_block = L_BRACKET + block + R_BRACKET
         do_while = (DO_KW + stmt + WHILE_KW + L_PAR + expr + R_PAR).setName('DoWhile')
-        func_decl = (FUNC_KW.suppress() + ident + L_PAR + pp.Optional(
-            ident + pp.ZeroOrMore(COMMA + ident)) + R_PAR + br_block).setName('FuncDeclaration')
+        args = (ident + pp.ZeroOrMore(COMMA + ident)).setName("Args")
+        func_decl = (FUNC_KW.suppress() + ident + L_PAR + pp.Optional(args) + R_PAR + br_block)\
+            .setName('FuncDeclaration')
 
         stmt << (
                 if_ |
@@ -90,7 +92,6 @@ class Parser:
         for var_name, value in locals().copy().items():
             if isinstance(value, pp.ParserElement):
                 Parser.__set_parse_action(var_name, value)
-
         return block.ignore(pp.cStyleComment).ignore(pp.dblSlashComment) + pp.stringEnd
 
     @staticmethod
@@ -126,7 +127,6 @@ class Parser:
                 cls = eval(cls)
                 if not inspect.isabstract(cls):
                     def parse_action(s, loc, toks):
-                        print(list(toks))
                         return cls(*toks)
                     rule.setParseAction(parse_action)
 
