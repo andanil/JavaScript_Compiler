@@ -62,7 +62,7 @@ class IdentNode(ValueNode):
         return str(self.name)
 
 
-class BinOp(Enum):
+class Operators(Enum):
     ADD = '+'
     SUB = '-'
     MUL = '*'
@@ -95,14 +95,14 @@ class BinExprNode(ExprNode):
         return str(self.op.value)
 
 
-class UnaryExpr(ExprNode):
+class UnaryExprNode(ExprNode):
     def __init__(self, op, argument):
         self.op = op
         self.argument = argument
 
     @property
     def children(self) -> Tuple[EvalNode]:
-        return self.argument
+        return (self.argument,) if self.argument else tuple()
 
     def __str__(self) -> str:
         return str(self.op.value)

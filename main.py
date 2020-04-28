@@ -2,6 +2,8 @@ import os
 from AST.Parser import *
 
 prog = '''
+    var d = 0;
+    d++;
     function kek(b, c){
         var s;
     }   

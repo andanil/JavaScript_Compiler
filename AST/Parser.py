@@ -39,8 +39,8 @@ class Parser:
 
         call = (ident + L_PAR + pp.Optional(expr + pp.ZeroOrMore(COMMA + expr)) + R_PAR).setName('Call')
 
-        incr_op = (ident + INCR.suppress()).setName('UnaryExpression')
-        decr_op = (ident + DECR.suppress()).setName('UnaryExpression')
+        incr_op = (ident + INCR).setName('UnaryExpr')
+        decr_op = (ident + DECR).setName('UnaryExpr')
 
         group = (literal | call | ident | L_PAR + expr + R_PAR)
 
@@ -99,7 +99,7 @@ class Parser:
             return
         if getattr(rule, 'name', None) and rule.name.isidentifier():
             rule_name = rule.name
-        if rule_name in ('BinExpr',):
+        if rule_name in ('BinExpr', ):
             def bin_op_parse_action(s, loc, toks):
                 node = toks[0]
                 if not isinstance(node, TreeNode):
@@ -108,10 +108,18 @@ class Parser:
                     secondNode = toks[i + 1]
                     if not isinstance(secondNode, TreeNode):
                         secondNode = bin_op_parse_action(s, loc, secondNode)
-                    node = BinExprNode(BinOp(toks[i]), node, secondNode)
+                    node = BinExprNode(Operators(toks[i]), node, secondNode)
                 return node
-
             rule.setParseAction(bin_op_parse_action)
+        elif rule_name in ('UnaryExpr', ):
+            def un_op_parse_action(s, loc, toks):
+                node = toks[0]
+                if not isinstance(node, TreeNode):
+                    node = un_op_parse_action(s, loc, node)
+                for i in range(1, len(toks)):
+                    node = UnaryExprNode(Operators(toks[i]), node)
+                return node
+            rule.setParseAction(un_op_parse_action)
         else:
             cls = rule_name + 'Node'
             with suppress(NameError):
