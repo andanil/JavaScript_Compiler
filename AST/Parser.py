@@ -9,10 +9,10 @@ from AST.Nodes import *
 class Parser:
     """ Класс, который используется для парсинга кода. """
     def __init__(self):
-        self.grammar = Parser.__mk_grammar()
+        self.grammar = self.__mk_grammar()
+        self._locs = []
 
-    @staticmethod
-    def __mk_grammar():
+    def __mk_grammar(self):
         """ Метод, в котором создаётся описание грамматики, вызывается в конструкторе класса Parser. """
         # Описание LiteralNode и IdentNode
         num = pp.Regex('[+-]?\\d+\\.?\\d*([eE][+-]?\\d+)?')
@@ -85,8 +85,8 @@ class Parser:
         # Описание блока кода в { } и без них, аргументов функции, объявления функции и оператора return.
         block = pp.ZeroOrMore(stmt + pp.ZeroOrMore(SEMICOLON)).setName('BlockStatement')
         br_block = L_BRACKET + block + R_BRACKET
-        args = (ident + pp.ZeroOrMore(COMMA + ident)).setName("Args")
-        func_decl = (FUNC_KW.suppress() + ident + L_PAR + pp.Optional(args) + R_PAR + br_block)\
+        args = ((ident + pp.ZeroOrMore(COMMA + ident)) | pp.Group(pp.empty)).setName("Args")
+        func_decl = (FUNC_KW.suppress() + ident + L_PAR + args + R_PAR + br_block)\
             .setName('FuncDeclaration')
         return_ = (RETURN_KW.suppress() + expr).setName('Return')
 
@@ -108,12 +108,11 @@ class Parser:
             # проверка на то, что текущий элемент является экземлпяром класса ParserElement
             if isinstance(value, pp.ParserElement):
                 # вызов метода __set_parse_action
-                Parser.__set_parse_action(var_name, value)
+                self.__set_parse_action(var_name, value)
 
         return block.ignore(pp.cStyleComment).ignore(pp.dblSlashComment) + pp.stringEnd
 
-    @staticmethod
-    def __set_parse_action(rule_name: str, rule: pp.ParserElement):
+    def __set_parse_action(self, rule_name: str, rule: pp.ParserElement):
         """ Этот метод задаёт то, какой конструктор вызывается при успешном распознавании правила грамматики. """
         # если rule_name написан КАПСОМ, то никаких действий совершать не нужно,
         # потому что КАПСОМ мы обозначили названия переменных, в которых описываются различные операторы.
@@ -135,7 +134,8 @@ class Parser:
                     if not isinstance(secondNode, TreeNode):
                         secondNode = bin_op_parse_action(s, loc, secondNode)
                     # Когда распознана правая часть, создаётся экземпляр класса BinExprNode.
-                    node = BinExprNode(Operators(toks[i]), node, secondNode)
+                    node = BinExprNode(self._locs[loc][0], self._locs[loc][1],
+                                       Operators(toks[i]), node, secondNode)
                 return node
             # Задаётся действие при успешном распознавании текущего правила - вызов функции bin_op_parse_action.
             rule.setParseAction(bin_op_parse_action)
@@ -149,7 +149,7 @@ class Parser:
                     node = un_op_parse_action(s, loc, node)
                 for i in range(1, len(toks)):
                     # Создаётся экземпляр класса UnaryExprNode.
-                    node = UnaryExprNode(Operators(toks[i]), node)
+                    node = UnaryExprNode(self._locs[loc][0], self._locs[loc][1], Operators(toks[i]), node)
                 return node
             # Задаётся действие при успешном распознавании текущего правила - вызов функции un_op_parse_action.
             rule.setParseAction(un_op_parse_action)
@@ -167,7 +167,7 @@ class Parser:
                 if not inspect.isabstract(cls):
                     # Этот метод вернёт экземпляр класса, который соответствует разбираемому правилу.
                     def parse_action(s, loc, toks):
-                        return cls(*toks)
+                        return cls(self._locs[loc][0], self._locs[loc][1], *toks)
                     # Задаётся действие при успешном распознавании текущего правила - вызов функции parse_action.
                     rule.setParseAction(parse_action)
 
@@ -176,4 +176,16 @@ class Parser:
         Функция, принимающая строку,
         в которой парсер по заданным правилам будет распознавать элементы описанного языка.
         """
+
+        row, col = 0, 0
+        for ch in code:
+            if ch == '\n':
+                row += 1
+                col = 0
+            elif ch == '\r':
+                pass
+            else:
+                col += 1
+            self._locs.append((row, col))
+
         return self.grammar.parseString(str(code))[0]

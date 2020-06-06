@@ -1,17 +1,17 @@
-from VirtualMachine.Instructions import *
-from VirtualMachine.Context import Context
+from VM.Instructions import *
+from VM.Context import Context
 
 
 class VirtualMachine:
     def __init__(self, code):
         self._code = code
-        self._IP = 0
+        self._cur_context_id = 0
         self._stack = []
         self._contexts = [Context(0)]
         self._halted = False
 
     def run(self):
-        while self._IP < len(self._code) and not self._halted:
+        while self._cur_context_id < len(self._code) and not self._halted:
             instruction = self.get_code("Ожидалась команда")
             self.execute_operation(instruction)
 
@@ -131,14 +131,14 @@ class VirtualMachine:
     def jmp(self):
         address = self.get_code("Ожидался адрес после команды JMP")
         self.check_address(address)
-        self._IP = address
+        self._cur_context_id = address
 
     def jnz(self):
         address = self.get_code("Ожидался адрес после команды JNZ")
         self.check_address(address)
         self.is_stack_empty()
         if self.pop():
-            self._IP = address
+            self._cur_context_id = address
 
     def load(self):
         var_name = self.get_code("Ожидалось имя переменной после команды LOAD")
@@ -152,8 +152,8 @@ class VirtualMachine:
     def call(self):
         address = self.get_code("Ожидался адрес после команды CALL")
         self.check_address(address)
-        self._contexts.append(Context(self._IP))
-        self._IP = address
+        self._contexts.append(Context(self._cur_context_id))
+        self._cur_context_id = address
 
     def ret(self):
         if len(self._contexts) == 1:
@@ -161,12 +161,12 @@ class VirtualMachine:
         else:
             ret_address = self.get_current_context().get_return_address()
             self._contexts.pop()
-            self._IP = ret_address
+            self._cur_context_id = ret_address
 
     def get_code(self, error_message):
-        if self._IP < len(self._code):
-            code = self._code[self._IP]
-            self._IP += 1
+        if self._cur_context_id < len(self._code):
+            code = self._code[self._cur_context_id]
+            self._cur_context_id += 1
             return code
         else:
             raise RuntimeError(error_message)
