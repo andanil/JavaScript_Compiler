@@ -35,8 +35,7 @@ class Parser:
         GT, LT, GE, LE = pp.Literal('>'), pp.Literal('<'), pp.Literal('>='), pp.Literal('<=')
         NEQ, EQ = pp.Literal('!='), pp.Literal('==')
         INCR, DECR = pp.Literal('++'), pp.Literal('--')
-        COMP_ADD, COMP_SUB, COMP_MUL, COMP_DIV, COMP_MOD = pp.Literal('+='), pp.Literal('-='), pp.Literal('*='), \
-                                                           pp.Literal('/='), pp.Literal('%=')
+
         # Объявляем переменные, описывающие операции умножения, сложения и Выражение. Они определяются дальше в коде.
         mul_op = pp.Forward()
         add_op = pp.Forward()
@@ -47,7 +46,6 @@ class Parser:
         incr_op = (ident + INCR).setName('UnaryExpr')
         decr_op = (ident + DECR).setName('UnaryExpr')
 
-        comp_op = (ident + COMP_MUL | COMP_DIV | COMP_MOD | COMP_SUB | COMP_ADD + expr).setName("BinExpr")
         group = (literal | call | ident | L_PAR + expr + R_PAR)
 
         # Описание бинарных выражений.
@@ -176,7 +174,6 @@ class Parser:
         Функция, принимающая строку,
         в которой парсер по заданным правилам будет распознавать элементы описанного языка.
         """
-
         row, col = 0, 0
         for ch in code:
             if ch == '\n':

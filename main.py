@@ -1,14 +1,12 @@
 import os
 from AST.Parser import *
 from Semantics.semantic_analyzer import *
+from Compiler.code_generator import CodeGenerator
 
 # строка с кодом, который в последствии будет распознаваться парсером.
 prog = '''
-    var a = 1;
-    function f(p1, p2){
-        var c = a;
-    }
-    f(1);
+    1;
+    a;
 '''
 # вызов конструктора класса Parser.
 parser = Parser()

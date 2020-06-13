@@ -1,7 +1,7 @@
 class Context:
-    def __init__(self, address):
+    def __init__(self, line):
         self._variables = []
-        self._return_address = address
+        self._return_line = line
 
     def get_variable(self, name):
         return self._variables[name]
@@ -10,4 +10,4 @@ class Context:
         self._variables[name] = value
 
     def get_return_address(self):
-        return self._return_address
+        return self._return_line

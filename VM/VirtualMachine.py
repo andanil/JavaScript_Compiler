@@ -5,13 +5,13 @@ from VM.Context import Context
 class VirtualMachine:
     def __init__(self, code):
         self._code = code
-        self._cur_context_id = 0
+        self._cur_line_id = 0
         self._stack = []
         self._contexts = [Context(0)]
         self._halted = False
 
     def run(self):
-        while self._cur_context_id < len(self._code) and not self._halted:
+        while self._cur_line_id < len(self._code) and not self._halted:
             instruction = self.get_code("Ожидалась команда")
             self.execute_operation(instruction)
 
@@ -25,12 +25,12 @@ class VirtualMachine:
             SUB: self.sub,
             MUL: self.mul,
             DIV: self.div,
-            IDIV: self.idiv,
             MOD: self.mod,
             NOT: self._not,
             AND: self._and,
             OR: self._or,
             EQ: self.eq,
+            NEQ: self.neq,
             GT: self.gt,
             LT: self.lt,
             GE: self.ge,
@@ -82,11 +82,6 @@ class VirtualMachine:
         last = self.pop()
         self._stack.append(self.pop() / last)
 
-    def idiv(self):
-        self.check_stack("IDIV")
-        last = self.pop()
-        self._stack.append(self.pop() // last)
-
     def mod(self):
         self.check_stack("MOD")
         last = self.pop()
@@ -108,6 +103,10 @@ class VirtualMachine:
         self.check_stack("EQ")
         self._stack.append(self.pop() == self.pop())
 
+    def neq(self):
+        self.check_stack("NEQ")
+        self._stack.append(self.pop() != self.pop())
+
     def gt(self):
         self.check_stack("GT")
         last = self.pop()
@@ -128,17 +127,22 @@ class VirtualMachine:
         last = self.pop()
         self._stack.append(self.pop() <= last)
 
+    def pwr(self):
+        self.check_stack("PWR")
+        last = self.pop()
+        self._stack.append(self.pop() ** last)
+
     def jmp(self):
         address = self.get_code("Ожидался адрес после команды JMP")
         self.check_address(address)
-        self._cur_context_id = address
+        self._cur_line_id = address
 
     def jnz(self):
         address = self.get_code("Ожидался адрес после команды JNZ")
         self.check_address(address)
         self.is_stack_empty()
         if self.pop():
-            self._cur_context_id = address
+            self._cur_line_id = address
 
     def load(self):
         var_name = self.get_code("Ожидалось имя переменной после команды LOAD")
@@ -152,8 +156,8 @@ class VirtualMachine:
     def call(self):
         address = self.get_code("Ожидался адрес после команды CALL")
         self.check_address(address)
-        self._contexts.append(Context(self._cur_context_id))
-        self._cur_context_id = address
+        self._contexts.append(Context(self._cur_line_id))
+        self._cur_line_id = address
 
     def ret(self):
         if len(self._contexts) == 1:
@@ -161,12 +165,12 @@ class VirtualMachine:
         else:
             ret_address = self.get_current_context().get_return_address()
             self._contexts.pop()
-            self._cur_context_id = ret_address
+            self._cur_line_id = ret_address
 
     def get_code(self, error_message):
-        if self._cur_context_id < len(self._code):
-            code = self._code[self._cur_context_id]
-            self._cur_context_id += 1
+        if self._cur_line_id < len(self._code):
+            code = self._code[self._cur_line_id]
+            self._cur_line_id += 1
             return code
         else:
             raise RuntimeError(error_message)

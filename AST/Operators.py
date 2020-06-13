@@ -22,8 +22,3 @@ class Operators(Enum):
     LT = '<'
     LOG_AND = '&&'
     LOG_OR = '||'
-    COMP_ADD = '+='
-    COMP_SUB = '-='
-    COMP_MUL = '*='
-    COMP_DIV = '/='
-    COMP_MOD = '%='

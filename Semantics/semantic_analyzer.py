@@ -31,6 +31,8 @@ class Analyzer:
                     newScope = Scope(self.__current_scope)
                     self.__current_scope.children_scopes.append(newScope)
                     self.__current_scope = newScope
+                    for param in child.params.params:
+                        self.__current_scope.add_label(Label(LabelType.VAR, param.name, None), [param.row, param.col])
                     self.analyze(child.block)
                     self.__current_scope = newScope.prev_scope
                 elif child.__class__.__name__ in ["CallNode"]:
