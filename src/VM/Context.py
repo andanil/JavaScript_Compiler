@@ -1,6 +1,6 @@
 class Context:
     def __init__(self, line):
-        self._variables = []
+        self._variables = {}
         self._return_line = line
 
     def get_variable(self, name):

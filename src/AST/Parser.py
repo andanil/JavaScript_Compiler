@@ -1,9 +1,9 @@
 import inspect
 from contextlib import suppress
-from AST.Operators import Operators
+from Operators import Operators
 import pyparsing as pp
 from pyparsing import pyparsing_common as ppc
-from AST.Nodes import *
+from Nodes import *
 
 
 class Parser:
@@ -15,8 +15,8 @@ class Parser:
     def __mk_grammar(self):
         """ Метод, в котором создаётся описание грамматики, вызывается в конструкторе класса Parser. """
         # Описание LiteralNode и IdentNode
-        num = pp.Regex('[+-]?\\d+\\.?\\d*([eE][+-]?\\d+)?')
-        str_ = pp.QuotedString('"', escChar='\\', unquoteResults=False, convertWhitespaceEscapes=False)
+        num = ppc.integer() | ppc.real()
+        str_ = pp.QuotedString('"', escChar='\\', unquoteResults=True, convertWhitespaceEscapes=False)
         literal = (num | str_).setName('Literal')
         ident = ppc.identifier.setName('Ident')
         # Описание ключевых слов

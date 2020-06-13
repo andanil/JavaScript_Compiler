@@ -1,5 +1,8 @@
-from Semantics.semantic_components import *
-from AST.Nodes import *
+import inspect
+import custom_builtins
+from semantic_components import *
+from Nodes import *
+builtin_funcs = [f for f in dir(custom_builtins) if inspect.isfunction(getattr(custom_builtins, f))]
 
 
 class Analyzer:
@@ -7,6 +10,9 @@ class Analyzer:
     def __init__(self):
         self.root_scope = Scope(None)
         self.__current_scope = self.root_scope
+        for func in builtin_funcs:
+            self.__current_scope.add_label(Label(LabelType.FUNC, str(func),
+                                                 len(inspect.signature(getattr(custom_builtins, func)).parameters)), [])
         self.errors = []
 
     def analyze(self, root_node: TreeNode):

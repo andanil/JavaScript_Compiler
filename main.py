@@ -1,12 +1,15 @@
 import os
-from AST.Parser import *
-from Semantics.semantic_analyzer import *
-from Compiler.code_generator import CodeGenerator
+from Parser import *
+from semantic_analyzer import *
+from code_generator import *
+from VirtualMachine import *
 
 # строка с кодом, который в последствии будет распознаваться парсером.
 prog = '''
-    1;
-    a;
+    var a = "1", b = 7;
+    a = 5;
+    for(var i = 0; i < 5; i++)
+        logprint(i);
 '''
 # вызов конструктора класса Parser.
 parser = Parser()
@@ -23,6 +26,8 @@ if len(analyzer.errors) > 0:
         print("Ошибка: {}".format(e.message))
 else:
     print("Ошибок не обнаружено.")
+    generator = CodeGenerator(res)
+    generator.print_bytecode()
+    vm = VirtualMachine(generator.lines)
 
-''' """"# вызов функции print, в результате которого в консоли будет отображено абстрактное синтаксическое дерево.
-print(*res.tree, sep=os.linesep)'''
+

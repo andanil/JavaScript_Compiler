@@ -68,7 +68,7 @@ class LiteralNode(ValueNode):
         self.value = value
 
     def __str__(self) -> str:
-        return str(self.value)
+        return str(self.value) if not isinstance(self.value, str) else '"{}"'.format(self.value)
 
 
 class IdentNode(ValueNode):
