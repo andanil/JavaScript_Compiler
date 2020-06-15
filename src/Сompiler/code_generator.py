@@ -1,5 +1,8 @@
 import inspect
 from typing import List
+
+from pyparsing import ParseResults
+
 from Nodes import *
 import custom_builtins
 op_cmd = {
@@ -33,10 +36,14 @@ class CodeGenerator:
     def __compile_functions(self):
         for child in self.__ast.children:
             if child.__class__.__name__ in ["FuncDeclarationNode"]:
-                self.__funcs[child.ident.name] = len(self.lines)
-                for param in child.params.params:
-                    self.__add_line(CodeLine('STORE', param.name))
+                self.__funcs[child.ident.name] = len(self.lines) + 1
+                if not isinstance(child.params.params[0], ParseResults):
+                    for param in child.params.params:
+                        self.__add_line(CodeLine('STORE', param.name))
                 self.__generate_code(child.block)
+                if self.lines[len(self.lines) - 1].cmd not in ['RET']:
+                    self.__add_line(CodeLine('RET'))
+        self.__add_line_at(CodeLine('JMP', len(self.lines) + 1), 0)
 
     def __generate_code(self, node: TreeNode):
         if node.__class__.__name__ in ["BinExprNode"]:

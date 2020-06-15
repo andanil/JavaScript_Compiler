@@ -1,12 +1,17 @@
 import inspect
+
+from pyparsing import ParseResults
+
 import custom_builtins
 from semantic_components import *
 from Nodes import *
+
 builtin_funcs = [f for f in dir(custom_builtins) if inspect.isfunction(getattr(custom_builtins, f))]
 
 
 class Analyzer:
     """Класс, производящий семантический анализ."""
+
     def __init__(self):
         self.root_scope = Scope(None)
         self.__current_scope = self.root_scope
@@ -32,7 +37,9 @@ class Analyzer:
                 elif child.__class__.__name__ in ["IdentNode"]:
                     self.__current_scope.get_label(child.name, [child.row, child.col])
                 elif child.__class__.__name__ in ["FuncDeclarationNode"]:
-                    self.__current_scope.add_label(Label(LabelType.FUNC, child.ident.name, len(child.params.params)),
+                    self.__current_scope.add_label(Label(LabelType.FUNC, child.ident.name,
+                                                         0 if isinstance(child.params.params[0], ParseResults) else len(
+                                                             child.params.params)),
                                                    [child.row, child.col])
                     newScope = Scope(self.__current_scope)
                     self.__current_scope.children_scopes.append(newScope)
