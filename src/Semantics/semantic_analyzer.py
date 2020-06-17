@@ -43,8 +43,7 @@ class Analyzer:
             elif node.__class__.__name__ in ["FuncDeclarationNode"]:
                 self.__current_scope.add_label(Label(LabelType.FUNC, node.ident.name,
                                                      0 if isinstance(node.params.params[0], ParseResults) else len(
-                                                         node.params.params)),
-                                               [node.row, node.col])
+                                                         node.params.params)), [node.row, node.col])
                 newScope = Scope(self.__current_scope)
                 self.__current_scope.children_scopes.append(newScope)
                 self.__current_scope = newScope

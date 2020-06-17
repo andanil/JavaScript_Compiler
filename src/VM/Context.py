@@ -4,7 +4,10 @@ class Context:
         self._return_line = line
 
     def get_variable(self, name):
-        return self._variables[name]
+        try:
+            return self._variables[name]
+        except KeyError:
+            return None
 
     def set_variable(self, name, value):
         self._variables[name] = value

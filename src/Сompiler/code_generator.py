@@ -41,8 +41,8 @@ class CodeGenerator:
                 self.__generate_code(child.block)
                 if self.lines[len(self.lines) - 1].cmd not in ['RET']:
                     self.__add_line(CodeLine('RET'))
-        if len(self.__funcs) is not 0:
-            self.__add_line_at(CodeLine('JMP', len(self.lines) + 1), 0)
+        if len(self.__funcs) != 0:
+            self.__add_line_at(CodeLine('JMP', len(self.lines) + 1), 0, len(self.lines))
 
     def __generate_code(self, node: TreeNode):
         if node.__class__.__name__ in ["BinExprNode"]:
@@ -109,8 +109,8 @@ class CodeGenerator:
         self.__generate_code(node.alternate)
         start_true = len(self.lines)
         self.__generate_code(node.consequent)
-        self.__add_line_at(CodeLine('JNZ', start_true + 2), start_false)
-        self.__add_line_at(CodeLine('JMP', len(self.lines) + 1), start_true + 1)
+        self.__add_line_at(CodeLine('JNZ', start_true + 2), start_false, len(self.lines))
+        self.__add_line_at(CodeLine('JMP', len(self.lines) + 1), start_true + 1, len(self.lines))
 
     def __compile_while(self, node: WhileNode):
         start_test = len(self.lines)
@@ -118,7 +118,7 @@ class CodeGenerator:
         self.__add_line(CodeLine('NOT'))
         start_true = len(self.lines)
         self.__generate_code(node.block)
-        self.__add_line_at(CodeLine('JNZ', len(self.lines) + 2), start_true)
+        self.__add_line_at(CodeLine('JNZ', len(self.lines) + 2), start_true, len(self.lines))
         self.__add_line(CodeLine('JMP', start_test))
 
     def __compile_dowhile(self, node: DoWhileNode):
@@ -139,13 +139,16 @@ class CodeGenerator:
         self.__generate_code(node.block)
         self.__generate_code(node.update)
         self.__add_line(CodeLine('JMP', start_test))
-        self.__add_line_at(CodeLine('JNZ', len(self.lines) + 1), start_block)
+        self.__add_line_at(CodeLine('JNZ', len(self.lines) + 1), start_block, len(self.lines))
 
     def __add_line(self, line):
         self.lines.append(line)
 
-    def __add_line_at(self, line, index):
+    def __add_line_at(self, line, index, cur_len):
         self.lines.insert(index, line)
+        for i in range(index + 1, cur_len):
+            if self.lines[i].cmd in ['JMP', 'JNZ']:
+                self.lines[i].value += 1
 
     def print_bytecode(self):
         id = 0

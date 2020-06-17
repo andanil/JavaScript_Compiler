@@ -71,7 +71,7 @@ class VirtualMachine:
 
     def dup(self):
         self.is_stack_empty()
-        last = self._stack[len(self._stack)-1]
+        last = self._stack[len(self._stack) - 1]
         self._stack.append(last)
 
     def add(self):
@@ -81,51 +81,44 @@ class VirtualMachine:
         if isinstance(right, str) or isinstance(left, str):
             left = str(left)
             right = str(right)
-        self._stack.append(left + right)
+        if left is None or right is None:
+            self._stack.append('NaN')
+        else:
+            self._stack.append(left + right)
 
     def sub(self):
         self.check_stack("SUB")
         right = self.pop()
         left = self.pop()
-        if isinstance(right, str) or isinstance(left, str):
-            self._stack.append('NaN')
-        else:
+        if not self.is_none_or_str(left, right):
             self._stack.append(left - right)
 
     def mul(self):
         self.check_stack("MUL")
         right = self.pop()
         left = self.pop()
-        if isinstance(right, str) or isinstance(left, str):
-            self._stack.append('NaN')
-        else:
+        if not self.is_none_or_str(left, right):
             self._stack.append(left * right)
 
     def pwr(self):
         self.check_stack("PWR")
         right = self.pop()
         left = self.pop()
-        if isinstance(right, str) or isinstance(left, str):
-            self._stack.append('NaN')
-        else:
+        if not self.is_none_or_str(left, right):
             self._stack.append(left ** right)
 
     def div(self):
         self.check_stack("DIV")
         right = self.pop()
         left = self.pop()
-        if isinstance(right, str) or isinstance(left, str):
-            self._stack.append('NaN')
-        else:
+        if not self.is_none_or_str(left, right):
             self._stack.append(left / right)
 
     def mod(self):
         self.check_stack("MOD")
         right = self.pop()
         left = self.pop()
-        if isinstance(right, str) or isinstance(left, str):
-            self._stack.append('NaN')
-        else:
+        if not self.is_none_or_str(left, right):
             self._stack.append(right % left)
 
     def _not(self):
@@ -162,7 +155,7 @@ class VirtualMachine:
         self.check_stack("EQ")
         right = self.pop()
         left = self.pop()
-        if (isinstance(right, str) and not isinstance(left, str))\
+        if (isinstance(right, str) and not isinstance(left, str)) \
                 or (not isinstance(right, str) and isinstance(left, str)):
             self._stack.append(False)
         else:
@@ -278,9 +271,13 @@ class VirtualMachine:
             raise RuntimeError("Стек пустой")
 
     def get_current_context(self):
-        return self._contexts[len(self._contexts)-1]
+        return self._contexts[len(self._contexts) - 1]
 
     def check_address(self, address):
         if address < 0 or address >= len(self._code):
             raise RuntimeError("Неверный адрес в команде JUMP")
 
+    def is_none_or_str(self, left, right):
+        if isinstance(right, str) or isinstance(left, str) or left is None or right is None:
+            self._stack.append('NaN')
+            return True
