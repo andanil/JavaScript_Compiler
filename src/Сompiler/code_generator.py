@@ -36,7 +36,7 @@ class CodeGenerator:
             if child.__class__.__name__ in ["FuncDeclarationNode"]:
                 self.__funcs[child.ident.name] = len(self.lines) + 1
                 if not isinstance(child.params.params[0], ParseResults):
-                    for param in child.params.params:
+                    for param in child.params.params[::-1]:
                         self.__add_line(CodeLine('STORE', param.name))
                 self.__generate_code(child.block)
                 if self.lines[len(self.lines) - 1].cmd not in ['RET']:
