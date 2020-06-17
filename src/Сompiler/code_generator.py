@@ -41,7 +41,8 @@ class CodeGenerator:
                 self.__generate_code(child.block)
                 if self.lines[len(self.lines) - 1].cmd not in ['RET']:
                     self.__add_line(CodeLine('RET'))
-        self.__add_line_at(CodeLine('JMP', len(self.lines) + 1), 0)
+        if len(self.__funcs) is not 0:
+            self.__add_line_at(CodeLine('JMP', len(self.lines) + 1), 0)
 
     def __generate_code(self, node: TreeNode):
         if node.__class__.__name__ in ["BinExprNode"]:
@@ -159,5 +160,5 @@ class CodeLine:
         self.value = value
 
     def __str__(self):
-        return self.cmd + ' ' + (str(self.value) if self.value else '')
+        return self.cmd + ' ' + (str(self.value) if self.value is not None else '')
 

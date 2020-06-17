@@ -28,6 +28,7 @@ class VirtualMachine:
             ADD: self.add,
             SUB: self.sub,
             MUL: self.mul,
+            PWR: self.pwr,
             DIV: self.div,
             MOD: self.mod,
             NOT: self._not,
@@ -99,6 +100,15 @@ class VirtualMachine:
             self._stack.append('NaN')
         else:
             self._stack.append(left * right)
+
+    def pwr(self):
+        self.check_stack("PWR")
+        right = self.pop()
+        left = self.pop()
+        if isinstance(right, str) or isinstance(left, str):
+            self._stack.append('NaN')
+        else:
+            self._stack.append(left ** right)
 
     def div(self):
         self.check_stack("DIV")

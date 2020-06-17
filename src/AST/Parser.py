@@ -83,7 +83,7 @@ class Parser:
         # Описание блока кода в { } и без них, аргументов функции, объявления функции и оператора return.
         block = pp.ZeroOrMore(stmt + pp.ZeroOrMore(SEMICOLON)).setName('BlockStatement')
         br_block = L_BRACKET + block + R_BRACKET
-        args = ((ident + pp.ZeroOrMore(COMMA + ident)) | pp.Group(pp.empty)).setName("Args")
+        args = ((expr + pp.ZeroOrMore(COMMA + expr)) | pp.Group(pp.empty)).setName("Args")
         func_decl = (FUNC_KW.suppress() + ident + L_PAR + args + R_PAR + br_block)\
             .setName('FuncDeclaration')
         return_ = (RETURN_KW.suppress() + expr).setName('Return')
