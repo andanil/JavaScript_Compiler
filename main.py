@@ -6,13 +6,16 @@ from VirtualMachine import *
 
 # строка с кодом, который в последствии будет распознаваться парсером.
 prog = '''
-    var a = 1450;
-    function abc(toPrint){
-        logprint("Строка " + toPrint + 228);
-        return toPrint;
+    function sum(b, c){
+        return b + c;
     }
-    a = a + abc(a);
-    logprint(a);
+    function sub(a, b) {
+        return a - b;
+    }
+    var n = 5;
+    var s = sum(n, 2);
+    logprint(s);
+    logprint(sub(s, 17));
 '''
 # вызов конструктора класса Parser.
 parser = Parser()

@@ -293,6 +293,7 @@ class CallNode(TreeNode):
         super().__init__(row, col)
         self.ident = ident
         self.args = args
+        self.name = ident.name
 
     @property
     def children(self) -> Tuple[IdentNode, EvalNode]:

@@ -1,8 +1,6 @@
 import inspect
 from typing import List
-
 from pyparsing import ParseResults
-
 from Nodes import *
 import custom_builtins
 op_cmd = {

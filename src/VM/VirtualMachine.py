@@ -89,7 +89,7 @@ class VirtualMachine:
         if isinstance(right, str) or isinstance(left, str):
             self._stack.append('NaN')
         else:
-            self._stack.append(left - right)
+            self._stack.append(right - left)
 
     def mul(self):
         self.check_stack("MUL")
@@ -107,7 +107,7 @@ class VirtualMachine:
         if isinstance(right, str) or isinstance(left, str):
             self._stack.append('NaN')
         else:
-            self._stack.append(left / right)
+            self._stack.append(right / left)
 
     def mod(self):
         self.check_stack("MOD")
@@ -116,7 +116,7 @@ class VirtualMachine:
         if isinstance(right, str) or isinstance(left, str):
             self._stack.append('NaN')
         else:
-            self._stack.append(left % right)
+            self._stack.append(right % left)
 
     def _not(self):
         self.is_stack_empty()
